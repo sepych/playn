@@ -95,7 +95,10 @@ public abstract class GL20Buffer implements GLBuffer {
     public Float add(GLBuffer.Float data) {
       FloatBuffer other = ((FloatImpl)data).buffer;
       other.position(0);
-      buffer.put(other);
+      for(int i = 0; i < other.remaining(); i++){
+    	  buffer.put(other.get(i));
+      }
+//      buffer.put(other);
       return this;
     }
 

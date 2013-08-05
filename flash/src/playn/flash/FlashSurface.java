@@ -25,6 +25,7 @@ import playn.core.Pattern;
 import playn.core.Surface;
 import playn.core.gl.GLShader;
 import playn.flash.FlashCanvas.Context2d;
+import playn.core.InternalTransform;
 
 public class FlashSurface implements Surface {
 
@@ -129,6 +130,12 @@ public class FlashSurface implements Surface {
     return this;
   }
 
+  @Override
+  public Surface save(InternalTransform ts) {
+	context2d.save();
+    return this;
+  }
+  
   @Override
   public Surface save() {
     context2d.save();

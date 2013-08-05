@@ -22,6 +22,7 @@ import playn.core.Path;
 import playn.core.Pattern;
 import playn.core.Surface;
 import playn.core.gl.GLShader;
+import playn.core.InternalTransform;
 
 /**
  * Implementation class, to be used by platforms that implement Surface as just
@@ -126,6 +127,12 @@ public class CanvasSurface implements Surface {
     return this;
   }
 
+  @Override
+  public Surface save(InternalTransform ts) {
+	canvas.save();
+    return this;
+  }
+  
   @Override
   public Surface save() {
     canvas.save();

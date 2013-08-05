@@ -16,6 +16,7 @@
 package playn.core;
 
 import playn.core.gl.GLShader;
+import playn.core.InternalTransform;
 
 /**
  * TODO
@@ -32,6 +33,11 @@ public interface Surface {
    */
   float height();
 
+  /**
+   * Saves the current transform.
+   */
+  Surface save(InternalTransform ts);
+  
   /**
    * Saves the current transform.
    */

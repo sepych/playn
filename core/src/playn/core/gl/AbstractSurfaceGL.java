@@ -199,6 +199,12 @@ abstract class AbstractSurfaceGL implements Surface {
     transformStack.add(ctx.createTransform().set(topTransform()));
     return this;
   }
+  
+  @Override
+  public Surface save(InternalTransform ts) {
+    transformStack.add(ts.set(topTransform()));
+    return this;
+  }
 
   @Override
   public Surface scale(float sx, float sy) {
