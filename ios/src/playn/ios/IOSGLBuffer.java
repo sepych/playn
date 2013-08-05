@@ -143,6 +143,13 @@ public abstract class IOSGLBuffer implements GLBuffer {
       data[position++] = (short) y;
       return this;
     }
+    
+    @Override
+    public Short add(short[] data, int offset, int length) {
+      System.arraycopy(data, offset, this.data, position, length);
+      position += length;
+      return this;
+    }
 
     @Override
     public void drawElements(int mode, int count) {

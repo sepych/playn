@@ -63,6 +63,13 @@ public interface GLBuffer {
     /** Adds the supplied pair of values to this buffer.
      * @return this buffer for call chaining. */
     Short add(int x, int y);
+    
+    /** Adds the supplied values to this buffer.
+     * @param data the value to be added.
+     * @param offset the offset into {@code data} at which to start adding.
+     * @param length the number of values from {@code data} to add.
+     * @return this buffer for call chaining. */
+    Short add(short[] data, int offset, int length);
 
     /** Issues a draw elements call using this buffer to define the elements. */
     void drawElements(int mode, int count);
