@@ -19,43 +19,47 @@ import playn.core.InternalTransform;
 
 /**
  * An abstraction over bulk buffers for use with {@link GLShader} and {@link GLProgram}.
+ *
+ * <p>A note on the {@code array} methods: on the Android and Java backends, the buffers are backed
+ * by an NIO buffer but the staging array is used to avoid repeated calls to {@code Buffer.put}
+ * which are very slow on Android. Since we have to use this backing array, we expose it directly
+ * so that shaders can obtain a reference to it and populate it directly rather than call dozens of
+ * methods to add floats one by one. On iOS, the buffer is backed by an array directly, so this API
+ * affords slightly higher performance on iOS as well.</p>
  */
 public interface GLBuffer {
 
   /** A buffer of 32-bit floats. */
   interface Float extends GLBuffer {
+    /** Returns the array that underlies this buffer. */
+    float[] array();
+
     /** Adds a single value to this buffer.
      * @return this buffer for call chaining. */
     Float add(float value);
-
-    /** Adds the matrix for the supplied transform to this buffer.
-     * @return this buffer for call chaining. */
-    Float add(InternalTransform xform);
 
     /** Adds the supplied pair of values to this buffer.
      * @return this buffer for call chaining. */
     Float add(float x, float y);
 
-    /** Adds the specified transform to this buffer.
+    /** Adds the supplied values to this buffer.
+     * @param data the values to be added.
      * @return this buffer for call chaining. */
-    Float add(float m00, float m01, float m10, float m11, float tx, float ty);
+    Float add(float[] data);
 
     /** Adds the supplied values to this buffer.
-     * @param data the value to be added.
+     * @param data the values to be added.
      * @param offset the offset into {@code data} at which to start adding.
      * @param length the number of values from {@code data} to add.
      * @return this buffer for call chaining. */
     Float add(float[] data, int offset, int length);
-
-    /** Adds the suppleid values to this buffer. The entire buffer will be copied, from position 0
-     * to its capactiy.
-     * @param data the value to be added.
-     * @return this buffer for call chaining. */
-    Float add(GLBuffer.Float data);
   }
 
   /** A buffer of 16-bit unsigned integers. */
   interface Short extends GLBuffer {
+    /** Returns the array that underlies this buffer. */
+    short[] array();
+
     /** Adds a single value to this buffer.
      * @return this buffer for call chaining. */
     Short add(int value);
@@ -70,6 +74,11 @@ public interface GLBuffer {
      * @param length the number of values from {@code data} to add.
      * @return this buffer for call chaining. */
     Short add(short[] data, int offset, int length);
+
+    /** Adds the supplied values to this buffer.
+     * @param data the values to be added.
+     * @return this buffer for call chaining. */
+    Short add(short[] data);
 
     /** Issues a draw elements call using this buffer to define the elements. */
     void drawElements(int mode, int count);
@@ -99,6 +108,10 @@ public interface GLBuffer {
    * elements.
    * @return the number of elements in the buffer at the time it was bound. */
   int send(int target, int usage);
+
+  /** Flushes this buffer's staging array to its underlying NIO buffer (if any). This is done
+   * automatically on a call to {@link #send}. */
+  void flush();
 
   /** Resets this buffer's position to zero. */
   void reset();

@@ -163,27 +163,14 @@ public class QuadShader extends GLShader {
     private final Uniform2f uScreenSize;
     private final Uniform4fv uData;
     private final Attrib aVertex;
-    private final GLBuffer.Float data;
     private final GLBuffer.Short vertices, elements;
-
-    /**
-     * Array to allow fast writing of data before sending to the GL buffer.
-     */
-    private final float[] arrayData;
-    /**
-     * The first free index in arrayData.
-     */
-    private int arrIndex;
+    private final GLBuffer.Float data;
 
     private int quadCounter;
     private float arTint, gbTint;
 
     public QuadCore(String vertShader, String fragShader) {
       super(vertShader, fragShader);
-
-      data = ctx.createFloatBuffer(maxQuads*vec4sPerQuad()*4);
-      arrayData = new float[maxQuads*vec4sPerQuad()*4];
-      arrIndex = 0;
 
       // compile the shader and get our uniform and attribute
       uScreenSize = prog.getUniform2f("u_ScreenSize");
@@ -203,6 +190,10 @@ public class QuadShader extends GLShader {
         elements.add(base+0).add(base+1).add(base+2);
         elements.add(base+1).add(base+3).add(base+2);
       }
+
+      // create the buffer that will hold quad data, and the float array that we'll use to avoid
+      // making too many calls to FloatBuffer.put() which has crap performance on Android
+      data = ctx.createFloatBuffer(maxQuads*vec4sPerQuad()*4);
 
       vertices.bind(GL20.GL_ARRAY_BUFFER);
       vertices.send(GL20.GL_ARRAY_BUFFER, GL20.GL_STATIC_DRAW);
@@ -229,11 +220,9 @@ public class QuadShader extends GLShader {
     public void flush() {
       if (quadCounter == 0)
         return;
-      data.add(arrayData, 0, arrIndex);
       uData.bind(data, quadCounter * vec4sPerQuad());
       elements.drawElements(GL20.GL_TRIANGLES, ELEMENTS_PER_QUAD*quadCounter);
       quadCounter = 0;
-      arrIndex = 0;
     }
 
     @Override
@@ -251,32 +240,30 @@ public class QuadShader extends GLShader {
                         float x3, float y3, float sx3, float sy3,
                         float x4, float y4, float sx4, float sy4) {
       float dw = x2 - x1, dh = y3 - y1;
-
-      arrayData[arrIndex++] = m00 * dw;
-      arrayData[arrIndex++] = m01 * dw;
-      arrayData[arrIndex++] = m10 * dh;
-      arrayData[arrIndex++] = m11 * dh;
-      arrayData[arrIndex++] = tx + m00 * x1 + m10 * y1;
-      arrayData[arrIndex++] = ty + m01 * x1 + m11 * y1;
-      arrayData[arrIndex++] = sx1;
-      arrayData[arrIndex++] = sy1;
-      arrayData[arrIndex++] = sx2 - sx1;
-      arrayData[arrIndex++] = sy3 - sy1;
-
-      addExtraData();
+      float[] quadData = data.array();
+      int opos = data.position(), pos = opos;
+      quadData[pos++] = m00*dw;
+      quadData[pos++] = m01*dw;
+      quadData[pos++] = m10*dh;
+      quadData[pos++] = m11*dh;
+      quadData[pos++] = tx + m00*x1 + m10*y1;
+      quadData[pos++] = ty + m01*x1 + m11*y1;
+      quadData[pos++] = sx1;
+      quadData[pos++] = sy1;
+      quadData[pos++] = sx2 - sx1;
+      quadData[pos++] = sy3 - sy1;
+      pos = addExtraData(quadData, pos);
+      data.skip(pos-opos);
       quadCounter++;
 
       if (quadCounter >= maxQuads)
         QuadShader.this.flush();
     }
 
-    protected void addData(float data) {
-      arrayData[arrIndex++] = data;
-    }
-
-    protected void addExtraData() {
-      addData(arTint);
-      addData(gbTint);
+    protected int addExtraData(float[] quadData, int pos) {
+      quadData[pos++] = arTint;
+      quadData[pos++] = gbTint;
+      return pos;
     }
   }
 }
