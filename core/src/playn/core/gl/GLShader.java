@@ -94,6 +94,9 @@ public abstract class GLShader {
      * @param stride the size of a single "bundle" of values in the vertex array.
      * @param offset the offset of this attribute into the "bundle" of values. */
     void bind(int stride, int offset);
+
+    /** Disables the vertex array index for this attribute. */
+    void unbind();
   }
 
   protected static final String FRAGMENT_PREAMBLE =
@@ -171,6 +174,11 @@ public abstract class GLShader {
     curExtras.willFlush();
     curCore.flush();
     if (GLContext.STATS_ENABLED) ctx.stats.shaderFlushes++;
+  }
+
+  /** Does any necessary shutdown when no longer using this shader. */
+  public void deactivate() {
+    curCore.deactivate();
   }
 
   /** Adds an axis-aligned quad to the current render operation. {@code left, top, right, bottom}
@@ -307,16 +315,44 @@ public abstract class GLShader {
    * remove or change the defaults.
    */
   protected String textureFragmentShader() {
-    return FRAGMENT_PREAMBLE +
-      "uniform lowp sampler2D u_Texture;\n" +
-      "varying mediump vec2 v_TexCoord;\n" +
-      "varying lowp vec4 v_Color;\n" +
+    StringBuilder str = new StringBuilder(FRAGMENT_PREAMBLE);
 
-      "void main(void) {\n" +
-      "  vec4 textureColor = texture2D(u_Texture, v_TexCoord);\n" +
-      "  textureColor.rgb *= v_Color.rgb;\n" +
-      "  gl_FragColor = textureColor * v_Color.a;\n" +
-      "}";
+    str.append(textureUniforms());
+    str.append(textureVaryings());
+
+    str.append("void main(void) {\n");
+
+    str.append(textureColor());
+    str.append(textureTint());
+    str.append(textureAlpha());
+
+    str.append(
+      "  gl_FragColor = textureColor;\n" +
+      "}");
+
+    return str.toString();
+  }
+
+  protected String textureUniforms() {
+    return "uniform lowp sampler2D u_Texture;\n";
+  }
+
+  protected String textureVaryings() {
+    return
+      "varying mediump vec2 v_TexCoord;\n" +
+      "varying lowp vec4 v_Color;\n";
+  }
+
+  protected String textureColor() {
+    return "  vec4 textureColor = texture2D(u_Texture, v_TexCoord);\n";
+  }
+
+  protected String textureTint() {
+    return "  textureColor.rgb *= v_Color.rgb;\n";
+  }
+
+  protected String textureAlpha() {
+    return "  textureColor *= v_Color.a;\n";
   }
 
   /**
@@ -354,6 +390,9 @@ public abstract class GLShader {
 
     /** Called to setup this core's shader after initially being bound. */
     public abstract void activate(int fbufWidth, int fbufHeight);
+
+    /** Called when this core is no longer being used. */
+    public abstract void deactivate();
 
     /** Called before each primitive to update the current color. */
     public abstract void prepare(int tint, boolean justActivated);

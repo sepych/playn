@@ -99,6 +99,11 @@ public class IOSGLContext extends GLContext {
   }
 
   @Override
+  public String getString(int param) {
+    return GL.GetString(All.wrap(param));
+  }
+
+  @Override
   public int getInteger(int param) {
     int[] out = new int[1];
     GL.GetInteger(GetPName.wrap(param), out);

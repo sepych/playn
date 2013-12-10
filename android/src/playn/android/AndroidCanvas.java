@@ -41,7 +41,8 @@ class AndroidCanvas extends AbstractCanvasGL<AndroidCanvas> {
 
   private LinkedList<AndroidCanvasState> paintStack = new LinkedList<AndroidCanvasState>();
 
-  AndroidCanvas(Bitmap bitmap) {
+  AndroidCanvas(Bitmap bitmap, float width, float height) {
+    super(width, height);
     canvas = new android.graphics.Canvas(bitmap);
     paintStack.addFirst(new AndroidCanvasState());
   }
@@ -63,7 +64,7 @@ class AndroidCanvas extends AbstractCanvasGL<AndroidCanvas> {
 
   @Override
   public Canvas clearRect(float x, float y, float width, float height) {
-    canvas.save(canvas.CLIP_SAVE_FLAG);
+    canvas.save(android.graphics.Canvas.CLIP_SAVE_FLAG);
     canvas.clipRect(x, y, x + width, y + height);
     // drawColor: "Fill the entire canvas' bitmap (restricted to the current clip) with the
     // specified color and porter-duff xfermode."
@@ -154,11 +155,6 @@ class AndroidCanvas extends AbstractCanvasGL<AndroidCanvas> {
     ((AndroidTextLayout)layout).draw(canvas, x, y, currentState().prepareFill());
     isDirty = true;
     return this;
-  }
-
-  @Override
-  public float height() {
-    return canvas.getHeight();
   }
 
   @Override
@@ -310,11 +306,6 @@ class AndroidCanvas extends AbstractCanvasGL<AndroidCanvas> {
   public Canvas translate(float x, float y) {
     canvas.translate(x, y);
     return this;
-  }
-
-  @Override
-  public float width() {
-    return canvas.getWidth();
   }
 
   @Override

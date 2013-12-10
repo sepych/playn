@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+
 import javax.imageio.ImageIO;
 
 import com.google.common.base.Charsets;
@@ -111,6 +112,11 @@ public class JavaAssets extends AbstractAssets<BufferedImage> {
   }
 
   @Override
+  public byte[] getBytesSync(String path) throws Exception {
+    return Resources.toByteArray(requireResource(pathPrefix + path));
+  }
+
+  @Override
   protected Image createStaticImage(BufferedImage bufimg, Scale scale) {
     return platform.graphics().createStaticImage(bufimg, scale);
   }
@@ -133,6 +139,13 @@ public class JavaAssets extends AbstractAssets<BufferedImage> {
         if (viewImageRatio < 1) {
           image = scaleImage(image, viewImageRatio);
           imageScale = viewScale;
+        }
+        if (platform.convertImagesOnLoad) {
+          BufferedImage convertedImage = JavaGLContext.convertImage(image);
+          if (convertedImage != image) {
+            platform.log().debug("Converted image: " + fullPath + " [type=" + image.getType() + "]");
+            image = convertedImage;
+          }
         }
         return recv.imageLoaded(image, imageScale);
       } catch (FileNotFoundException fnfe) {
@@ -179,7 +192,7 @@ public class JavaAssets extends AbstractAssets<BufferedImage> {
   protected BufferedImage scaleImage(BufferedImage image, float viewImageRatio) {
     int swidth = MathUtil.iceil(viewImageRatio * image.getWidth());
     int sheight = MathUtil.iceil(viewImageRatio * image.getHeight());
-    BufferedImage scaled = new BufferedImage(swidth, sheight, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage scaled = new BufferedImage(swidth, sheight, BufferedImage.TYPE_INT_ARGB_PRE);
     Graphics2D gfx = scaled.createGraphics();
     gfx.drawImage(image.getScaledInstance(swidth, sheight, java.awt.Image.SCALE_SMOOTH), 0, 0, null);
     gfx.dispose();

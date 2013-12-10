@@ -109,6 +109,7 @@ public class TestsGame extends Game.Default {
     new ShaderTest(),
     new SoundTest(),
     new NetTest(),
+    new FullscreenTest(),
     /*new YourTest(),*/
   };
   private Test currentTest;
@@ -199,6 +200,9 @@ public class TestsGame extends Game.Default {
     y += infoImg.height() + gap;
 
     for (Test test : tests) {
+      if (!test.available()) {
+        continue;
+      }
       ImageLayer button = createButton(test);
       if (x + button.width() > graphics().width() - gap) {
         x = gap;
@@ -214,7 +218,7 @@ public class TestsGame extends Game.Default {
   ImageLayer createButton (final Test test) {
     ImageLayer layer = graphics().createImageLayer(makeButtonImage(test.getName()));
     layer.addListener(new Pointer.Adapter() {
-      public void onPointerStart(Pointer.Event event) {
+      @Override public void onPointerStart(Pointer.Event event) {
         startTest(test);
       }
     });

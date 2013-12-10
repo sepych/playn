@@ -29,7 +29,6 @@ import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -237,7 +236,7 @@ public abstract class GameActivity extends Activity {
     layout.setBackgroundColor(0xFF000000);
     layout.setGravity(Gravity.CENTER);
     layout.addView(gameView);
-    LayoutParams params = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+    LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
     getWindow().setContentView(layout, params);
   }
 }

@@ -36,23 +36,24 @@ import playn.core.gl.AbstractCanvasGL;
  */
 public class IOSCanvas extends AbstractCanvasGL<CGBitmapContext> {
 
-  private final float width, height;
   private final int texWidth, texHeight;
 
   private float strokeWidth = 1;
   private int strokeColor = 0xFF000000;
   private IntPtr data;
   private CGBitmapContext bctx;
+  private IOSGLContext ctx;
 
   private LinkedList<IOSCanvasState> states = new LinkedList<IOSCanvasState>();
 
   public IOSCanvas(IOSGLContext ctx, float width, float height, boolean interpolate) {
+    super(width, height);
     // if our size is invalid, we'll fail below at CGBitmapContext, so fail here more usefully
     if (width <= 0 || height <= 0) throw new IllegalArgumentException(
       "Invalid size " + width + "x" + height);
-    this.width = width;
-    this.height = height;
     states.addFirst(new IOSCanvasState());
+
+    this.ctx = ctx;
 
     // create our raw image data
     texWidth = ctx.scale.scaledCeil(width);
@@ -102,16 +103,6 @@ public class IOSCanvas extends AbstractCanvasGL<CGBitmapContext> {
       Marshal.FreeHGlobal(data);
       data = null;
     }
-  }
-
-  @Override
-  public float width() {
-    return width;
-  }
-
-  @Override
-  public float height() {
-    return height;
   }
 
   @Override
@@ -236,7 +227,35 @@ public class IOSCanvas extends AbstractCanvasGL<CGBitmapContext> {
 
   @Override
   public Canvas fillText(TextLayout layout, float x, float y) {
-    ((IOSTextLayout) layout).fill(bctx, x, y);
+    IOSGradient gradient = currentState().gradient;
+    IOSTextLayout ilayout = (IOSTextLayout) layout;
+    if (gradient == null) {
+      ilayout.fill(bctx, x, y);
+
+    } else {
+      // draw our text into a fresh context so we can use it as a mask for the gradient
+      IntPtr data = Marshal.AllocHGlobal(texWidth * texHeight * 4);
+      CGBitmapContext maskContext = new CGBitmapContext(
+        data, texWidth, texHeight, 8, 4 * texWidth, IOSGraphics.colorSpace,
+        CGImageAlphaInfo.wrap(CGImageAlphaInfo.PremultipliedLast));
+      maskContext.ClearRect(new RectangleF(0, 0, texWidth, texHeight));
+      // scale the context based on our scale factor
+      maskContext.ScaleCTM(ctx.scale.factor, ctx.scale.factor);
+      // fill the text into this temp context in white for use as a mask
+      maskContext.SetFillColor(toCGColor(0xFFFFFFFF));
+      ilayout.fill(maskContext, 0, 0);
+
+      // now fill the gradient, using our temp context as a mask
+      bctx.SaveState();
+      bctx.ClipToMask(new RectangleF(x, y, width, height), maskContext.ToImage());
+      gradient.fill(bctx);
+      bctx.RestoreState();
+
+      // finally free the temp context and its associated buffer
+      maskContext.Dispose();
+      Marshal.FreeHGlobal(data);
+    }
+
     isDirty = true;
     return this;
   }
@@ -381,6 +400,7 @@ public class IOSCanvas extends AbstractCanvasGL<CGBitmapContext> {
     return this;
   }
 
+  @Override
   protected void finalize() {
     dispose(); // meh
   }

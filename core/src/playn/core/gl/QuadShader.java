@@ -111,7 +111,7 @@ public class QuadShader extends GLShader {
       throw new RuntimeException(
         "GL_MAX_VERTEX_UNIFORM_VECTORS too low: have " + maxVecs +
         ", need at least " + vec4sPerQuad());
-    this.maxQuads = maxVecs / vec4sPerQuad();
+    maxQuads = maxVecs / vec4sPerQuad();
   }
 
   @Override
@@ -211,6 +211,11 @@ public class QuadShader extends GLShader {
     }
 
     @Override
+    public void deactivate() {
+      aVertex.unbind();
+    }
+
+    @Override
     public void prepare(int tint, boolean justActivated) {
       this.arTint = (tint >> 16) & 0xFFFF;
       this.gbTint = tint & 0xFFFF;
@@ -220,6 +225,7 @@ public class QuadShader extends GLShader {
     public void flush() {
       if (quadCounter == 0)
         return;
+
       uData.bind(data, quadCounter * vec4sPerQuad());
       elements.drawElements(GL20.GL_TRIANGLES, ELEMENTS_PER_QUAD*quadCounter);
       quadCounter = 0;

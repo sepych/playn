@@ -22,7 +22,6 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 import playn.core.Asserts;
-import playn.core.InternalTransform;
 
 /**
  * {@link GLBuffer} implementation based on {@code java.nio} and usable with {@link GL20}.
@@ -113,10 +112,12 @@ public abstract class GL20Buffer implements GLBuffer {
       return "floatbuf:" + bufferId;
     }
 
+    @Override
     protected Buffer buffer() {
       return buffer;
     }
 
+    @Override
     protected int bytesPerElement() {
       return 4;
     }
@@ -210,10 +211,12 @@ public abstract class GL20Buffer implements GLBuffer {
       return "shortbuf:" + bufferId;
     }
 
+    @Override
     protected Buffer buffer() {
       return buffer;
     }
 
+    @Override
     protected int bytesPerElement() {
       return 2;
     }

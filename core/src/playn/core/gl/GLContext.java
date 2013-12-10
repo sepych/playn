@@ -30,7 +30,7 @@ import playn.core.StockInternalTransform;
 public abstract class GLContext {
 
   /** Used to configure texture image scaling. */
-  public static enum Filter { LINEAR, NEAREST };
+  public static enum Filter { LINEAR, NEAREST }
 
   /** Used to track and report rendering statistics. */
   public static class Stats {
@@ -79,9 +79,6 @@ public abstract class GLContext {
   /** The (actual screen pixel) width and height of our current frame buffer. */
   protected int curFbufWidth, curFbufHeight;
 
-  /** Whether to use QuadShader if possible. */
-  protected boolean enableQuadShader = true;
-
   /** The (logical pixel) width and height of our view. */
   public int viewWidth, viewHeight;
 
@@ -92,12 +89,12 @@ public abstract class GLContext {
    * Sets the view width to the specified width and height (in pixels). The framebuffer will
    * potentially be larger than this size if a HiDPI scale factor is in effect.
    */
-  public void setSize(int width, int height) {
+  public final void setSize(int width, int height) {
     viewWidth = width;
     viewHeight = height;
     curFbufWidth = defaultFbufWidth = scale.scaledCeil(width);
     curFbufHeight = defaultFbufHeight = scale.scaledCeil(height);
-    viewWasResized();
+    viewConfigChanged();
   }
 
   /**
@@ -107,6 +104,9 @@ public abstract class GLContext {
    * @param magFilter the scaling to use when rendering textures that are scaled up.
    */
   public abstract void setTextureFilter(Filter minFilter, Filter magFilter);
+
+  /** Returns the specified GL string parameter. */
+  public abstract String getString(int param);
 
   /** Returns the specified GL integer parameter. */
   public abstract int getInteger(int param);
@@ -160,7 +160,9 @@ public abstract class GLContext {
    */
   public abstract GLBuffer.Short createShortBuffer(int capacity);
 
-  /** Creates a framebuffer that will render into the supplied texture. */
+  /** Creates a framebuffer that will render into the supplied texture. <em>NOTE:</em> this must be
+   * followed immediately by a call to {@link #bindFramebuffer(int,int,int)} or {@link
+   * #pushFramebuffer}. */
   public int createFramebuffer(int tex) {
     flush();
     return createFramebufferImpl(tex);
@@ -282,9 +284,14 @@ public abstract class GLContext {
   }
 
   public void flush() {
+      flush(false);
+  }
+
+  public void flush(boolean deactivate) {
     if (curShader != null) {
       checkGLError("flush()");
       curShader.flush();
+      if (deactivate) curShader.deactivate();
       curShader = null;
     }
   }
@@ -296,7 +303,7 @@ public abstract class GLContext {
     if (curShader == shader && !forceFlush)
       return false;
     checkGLError("useShader");
-    flush();
+    flush(true);
     curShader = shader;
     return true;
   }
@@ -374,7 +381,7 @@ public abstract class GLContext {
     this.platform = platform;
   }
 
-  protected void viewWasResized () {
+  protected void viewConfigChanged () {
     bindFramebufferImpl(defaultFrameBuffer(), defaultFbufWidth, defaultFbufHeight);
   }
 
@@ -409,8 +416,12 @@ public abstract class GLContext {
    */
   protected abstract void bindFramebufferImpl(int fbuf, int width, int height);
 
-  protected GLShader createQuadShader () {
-    if (enableQuadShader && QuadShader.isLikelyToPerform(this)) {
+  protected boolean shouldTryQuadShader() {
+    return QuadShader.isLikelyToPerform(this);
+  }
+
+  protected GLShader createQuadShader() {
+    if (shouldTryQuadShader()) {
       try {
         GLShader quadShader = new QuadShader(this);
         quadShader.createCores(); // force core creation to test whether it fails

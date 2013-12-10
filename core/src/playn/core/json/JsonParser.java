@@ -17,7 +17,7 @@ import java.math.BigInteger;
 
 /**
  * Simple JSON parser.
- * 
+ *
  * <pre>
  * Object json = {@link JsonParser}.any().from("{\"a\":[true,false], \"b\":1}");
  * Number json = ({@link Number}){@link JsonParser}.any().from("123.456e7");
@@ -81,7 +81,7 @@ final class JsonParser {
 
   /**
    * Parses a {@link JsonObject} from a source.
-   * 
+   *
    * <pre>
    * JsonObject json = {@link JsonParser}.object().from("{\"a\":[true,false], \"b\":1}");
    * </pre>
@@ -92,7 +92,7 @@ final class JsonParser {
 
   /**
    * Parses a {@link JsonArray} from a source.
-   * 
+   *
    * <pre>
    * JsonArray json = {@link JsonParser}.array().from("[1, {\"a\":[true,false], \"b\":1}]");
    * </pre>
@@ -104,7 +104,7 @@ final class JsonParser {
   /**
    * Parses any object from a source. For any valid JSON, returns either a null (for the JSON string 'null'), a
    * {@link String}, a {@link Number}, a {@link Boolean}, a {@link JsonObject} or a {@link JsonArray}.
-   * 
+   *
    * <pre>
    * Object json = {@link JsonParser}.any().from("{\"a\":[true,false], \"b\":1}");
    * Number json = ({@link Number}){@link JsonParser}.any().from("123.456e7");
@@ -256,16 +256,17 @@ final class JsonParser {
    * Steps through to the end of the current number token (a non-digit token).
    */
   private Number consumeTokenNumber(char c) throws JsonParserException {
-    reusableBuffer.setLength(0);
-    reusableBuffer.append(c);
+    int start = index - 1;
+    int end = index;
+
     boolean isDouble = false;
     while (isDigitCharacter(peekChar())) {
       char next = (char)advanceChar();
       isDouble = next == '.' || next == 'e' || next == 'E' || isDouble;
-      reusableBuffer.append(next);
+      end++;
     }
 
-    String number = reusableBuffer.toString();
+    String number = string.substring(start, end);
 
     try {
       if (isDouble) {
@@ -319,7 +320,6 @@ final class JsonParser {
   /**
    * Steps through to the end of the current string token (the unescaped double quote).
    */
-  @SuppressWarnings("fallthrough")
   private String consumeTokenString() throws JsonParserException {
     reusableBuffer.setLength(0);
     while (true) {

@@ -51,6 +51,10 @@ public abstract class Test {
     return false;
   }
 
+  public boolean available () {
+    return true;
+  }
+
   protected float addTest(float lx, float ly, Layer.HasSize layer, String descrip) {
     return addTest(lx, ly, layer, descrip, layer.width());
   }
@@ -106,7 +110,7 @@ public abstract class Test {
     CanvasImage image = formatText(text, true);
     ImageLayer button = graphics().createImageLayer(image);
     button.addListener(new Pointer.Adapter() {
-      public void onPointerStart(Pointer.Event event) {
+      @Override public void onPointerStart(Pointer.Event event) {
         onClick.run();
       }
     });

@@ -103,9 +103,21 @@ public class WatchedAssets implements Assets {
     delegate.getText(path, callback);
   }
 
+  @Override
+  public byte[] getBytesSync(String path) throws Exception {
+    // no tracking for arbitrary binary loading
+    return delegate.getBytesSync(path);
+  }
+
+  @Override
+  public void getBytes(String path, Callback<byte[]> callback) {
+    // no tracking for arbitrary binary loading
+    delegate.getBytes(path, callback);
+  }
+
   /**
-   * Return <code>true</code> if all requested assets have been loaded or errored out,
-   * or <code>false</code> if there are assets remaining to be retrieved
+   * Return @code true} if all requested assets have been loaded or errored out,
+   * or {@code false} if there are assets remaining to be retrieved
    */
   public boolean isDone() {
     return (this.totalRequestsCount == this.errorsCount + this.successCount);
