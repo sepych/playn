@@ -272,7 +272,11 @@ public abstract class AbstractLayer implements Layer {
 
   @Override
   public Layer hitTest(Point p) {
-    return (hitTester == null) ? hitTestDefault(p) : hitTester.hitTest(this, p);
+	  try{
+		  return (hitTester == null) ? hitTestDefault(p) : hitTester.hitTest(this, p);
+	  } catch (Exception ex){
+		  return null;
+	  }
   }
 
   @Override

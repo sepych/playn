@@ -50,7 +50,7 @@ public class GL20Context extends GLContext {
   public void init() {
     gl.glDisable(GL_CULL_FACE);
     gl.glEnable(GL_BLEND);
-    gl.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    gl.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); 
     gl.glClearColor(0, 0, 0, 1);
     if (quadShader != null) {
       quadShader.clearProgram();
